@@ -1,16 +1,23 @@
 table {
     width: 100%;
     table-layout: fixed;
+    border-collapse: collapse;
     transform-origin: top left; /* 縮小の起点を左上に設定 */
 }
 
 th, td {
-    width: auto;
+    border: 1px solid #ddd;
+    text-align: center;
+    font-size: 10px;
+    white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    white-space: nowrap;
-    font-size: 10px; /* 文字サイズを縮小 */
 }
+
+td {
+    background-color: white; /* デフォルト色 */
+}
+
 
 .color-input {
     margin: 1px;
