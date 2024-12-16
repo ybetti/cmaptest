@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV Viewer</title>
+    <style>
+        table {
+            width: 100%;
+            table-layout: fixed;
+            transform-origin: top left;
+        }
+
+        th, td {
+            width: auto;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 10px;
+        }
+
+        .color-input {
+            margin: 1px;
+        }
+
+        .large-button {
+            font-size: 11px;
+            padding: 5px 9px;
+            margin: 3px;
+        }
+
+        #colorMapContainer {
+            width: 100%;
+            max-height: 400px;
+            overflow: auto;
+            border: 1px solid #000;
+        }
+
+        #colorMap {
+            width: 100%;
+            height: auto;
+            transform: scale(0.1);
+            transform-origin: top left;
+        }
+
+        .fullscreen-table {
+            width: 100%;
+            height: 100%;
+            max-height: none;
+            overflow: visible;
+        }
+
+        .min-cell {
+            border: 30px solid pink;
+        }
+    </style>
+</head>
+<body>
+    <h1>CSV Viewer</h1>
+    <input type="file" id="fileInput">
+    <button id="updateButton" class="large-button">Update Color Map</button>
+    <button id="fullscreenButton" class="large-button">Fullscreen View</button>
+    <button id="applyButton" class="large-button">Apply Font Size</button>
+    <button id="transposeButton" class="large-button">Transpose Rows and Columns</button>
+
+    <div id="colorMapContainer">
+        <div id="colorMap"></div>
+    </div>
+
+    <script>
+        let globalData = null;
+        let autoMinValue = Number.POSITIVE_INFINITY;
+        let autoMaxValue = Number.NEGATIVE_INFINITY;
+
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.readAsText(file);
+
+            reader.onload = function() {
+                globalData = reader.result;
+                calculateMinMax();
+                updateColorMap();
+            };
+        });
+
+        document.getElementById('fullscreenButton').addEventListener('click', function() {
+            const newWindow = window.open('', '', 'width=800,height=600');
+            newWindow.document.write('<html><head><title>Fullscreen View</title></head><body></body></html>');
+
+            const colorMapContainer = newWindow.document.body;
+            const tableContainer = document.getElementById('colorMap').cloneNode(true);
+            colorMapContainer.appendChild(tableContainer);
+
+            const table = colorMapContainer.querySelector('table');
+            table.style.transform = 'scale(0.1)';
+            table.style.transformOrigin = 'top left';
+            colorMapContainer.style.overflow = 'auto';
+            newWindow.document.close();
+        });
+
+        document.getElementById('applyButton').addEventListener('click', function() {
+            const table = document.querySelector('table');
+            if (table) {
+                table.style.fontSize = '12px';
+            }
+        });
+
+        document.getElementById('updateButton').addEventListener('click', function() {
+            updateColorMap();
+            findTop3MinValueCells();
+        });
+
+        document.getElementById('transposeButton').addEventListener('click', function() {
+            transposeData();
+            updateColorMap();
+        });
+
+        function calculateMinMax() {
+            if (!globalData) return;
+
+            const lines = globalData.split('\n');
+            for (let i = 1; i < lines.length; i++) {
+                const rowData = lines[i].split(',');
+                rowData.forEach(cell => {
+                    const numericValue = parseFloat(cell);
+                    if (!isNaN(numericValue)) {
+                        if (numericValue < autoMinValue) autoMinValue = numericValue;
+                        if (numericValue > autoMaxValue) autoMaxValue = numericValue;
+                    }
+                });
+            }
+        }
+
+        function updateColorMap() {
+            if (!globalData) return;
+
+            const lines = globalData.split('\n');
+            const headers = lines[0].split(',');
+            const colorMap = document.getElementById('colorMap');
+            colorMap.innerHTML = '';
+
+            const table = document.createElement('table');
+            const headerRow = document.createElement('tr');
+
+            headers.forEach(header => {
+                const th = document.createElement('th');
+                th.textContent = header;
+                headerRow.appendChild(th);
+            });
+
+            table.appendChild(headerRow);
+
+            for (let i = 1; i < lines.length; i++) {
+                const rowData = lines[i].split(',');
+                const row = document.createElement('tr');
+                rowData.forEach(cell => {
+                    const td = document.createElement('td');
+                    td.textContent = cell;
+                    row.appendChild(td);
+                });
+                table.appendChild(row);
+            }
+
+            colorMap.appendChild(table);
+            table.style.transform = 'scale(0.1)';
+            table.style.transformOrigin = 'top left';
+        }
+
+        function transposeData() {
+            if (!globalData) return;
+
+            const lines = globalData.split('\n');
+            const transposed = [];
+
+            lines.forEach((line, rowIndex) => {
+                const cells = line.split(',');
+                cells.forEach((cell, colIndex) => {
+                    if (!transposed[colIndex]) {
+                        transposed[colIndex] = [];
+                    }
+                    transposed[colIndex][rowIndex] = cell;
+                });
+            });
+
+            globalData = transposed.map(row => row.join(',')).join('\n');
+        }
+
+        function findTop3MinValueCells() {
+            if (!globalData) return;
+
+            const lines = globalData.split('\n');
+            const minCells = [];
+
+            for (let i = 1; i < lines.length; i++) {
+                const rowData = lines[i].split(',');
+                rowData.forEach((cell, colIndex) => {
+                    const numericValue = parseFloat(cell);
+                    if (!isNaN(numericValue)) {
+                        minCells.push({ value: numericValue, row: i, col: colIndex });
+                    }
+                });
+            }
+
+            minCells.sort((a, b) => a.value - b.value);
+            const top3MinCells = minCells.slice(0, 3);
+
+            const tableRows = document.querySelectorAll('#colorMap table tr');
+            top3MinCells.forEach((cellData, index) => {
+                const row = tableRows[cellData.row];
+                if (row) {
+                    const targetCell = row.children[cellData.col];
+                    targetCell.style.border = '15px solid';
+                    targetCell.style.backgroundColor = ['#ffcccc', '#ffe5cc', '#ffffcc'][index];
+                }
+            });
+        }
+    </script>
+</body>
+</html>
