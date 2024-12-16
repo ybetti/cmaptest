@@ -345,15 +345,31 @@ function getCurrentCSVData() {
 }
 
 // テーブルを再描画する
+// テーブルを再描画する (色付けを追加)
 function renderTable(data) {
     let table = document.getElementById('colorMap');
     table.innerHTML = ''; // 既存のテーブル内容をクリア
 
-    data.forEach(row => {
+    data.forEach((row, rowIndex) => {
         let tr = document.createElement('tr');
-        row.forEach(cell => {
+        row.forEach((cell, colIndex) => {
             let td = document.createElement('td');
             td.textContent = cell;
+
+            // **色付けロジック**
+            const value = parseFloat(cell);
+            if (!isNaN(value)) {
+                if (value > 100) {
+                    td.style.backgroundColor = 'red';
+                } else if (value > 50) {
+                    td.style.backgroundColor = 'orange';
+                } else {
+                    td.style.backgroundColor = 'yellow';
+                }
+            } else {
+                td.style.backgroundColor = 'lightgray'; // 数値以外の場合
+            }
+
             tr.appendChild(td);
         });
         table.appendChild(tr);
