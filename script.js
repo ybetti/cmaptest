@@ -241,6 +241,24 @@ document.getElementById('updateButton').addEventListener('click', function() {
     findTop3MinValueCells(); // カラーマップ更新後にトップ3の最小値のセルを強調表示
 });
 
+// CSVデータを転置する関数
+function transposeCSV(data) {
+    return data[0].map((_, colIndex) => data.map(row => row[colIndex]));
+}
+
+// 転置ボタンのクリックイベント
+document.getElementById('transposeButton').addEventListener('click', () => {
+    // 現在のデータを取得
+    let currentData = getCurrentCSVData(); // CSVデータを取得する関数
+
+    // 転置処理
+    let transposedData = transposeCSV(currentData);
+
+    // テーブルを再描画
+    renderTable(transposedData); // 転置後のデータを表示する関数
+});
+
+
 document.getElementById('colorMap').addEventListener('click', function(event) {
     const targetCell = event.target;
 
