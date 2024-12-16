@@ -157,6 +157,15 @@ function getColorForValue(value, min, max) {
     }
 }
 
+function readCSV(file, callback) {
+    const reader = new FileReader();
+    reader.onload = function (event) {
+        const csvData = event.target.result.split('\n').map(line => line.split(',')); 
+        callback(csvData); // データをコールバックに渡す
+    };
+    reader.readAsText(file);
+}
+
 function findMinValueCell() {
     if (!globalData) return;
 
@@ -332,6 +341,28 @@ function displaySurroundingValues(row, col) {
     newWindow.document.write('</body></html>');
     newWindow.document.close(); // 新しいウィンドウの書き込みを終了
 }
+
+document.getElementById('csvInput').addEventListener('change', (event) => {
+    const file = event.target.files[0];
+    if (file) {
+        readCSV(file, (data) => {
+            originalData = data; // データを保存
+            renderTable(data);   // テーブルに表示
+        });
+    }
+});
+
+let originalData = [];
+let isTransposed = false;
+
+document.getElementById('transposeButton').addEventListener('click', () => {
+    if (originalData.length === 0) return; // データが空の場合は何もしない
+
+    let displayedData = isTransposed ? originalData : transposeCSV(originalData);
+    renderTable(displayedData);
+    isTransposed = !isTransposed;
+});
+
 
 // 現在のCSVデータを取得する
 function getCurrentCSVData() {
