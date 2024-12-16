@@ -332,3 +332,31 @@ function displaySurroundingValues(row, col) {
     newWindow.document.write('</body></html>');
     newWindow.document.close(); // 新しいウィンドウの書き込みを終了
 }
+
+// 現在のCSVデータを取得する
+function getCurrentCSVData() {
+    // ここで現在表示されているCSVデータを配列形式で取得
+    // CSV読み込みや処理部分に合わせて実装してください
+    return [
+        ['A', 'B', 'C'],
+        ['1', '2', '3'],
+        ['4', '5', '6']
+    ];
+}
+
+// テーブルを再描画する
+function renderTable(data) {
+    let table = document.getElementById('colorMap');
+    table.innerHTML = ''; // 既存のテーブル内容をクリア
+
+    data.forEach(row => {
+        let tr = document.createElement('tr');
+        row.forEach(cell => {
+            let td = document.createElement('td');
+            td.textContent = cell;
+            tr.appendChild(td);
+        });
+        table.appendChild(tr);
+    });
+}
+
